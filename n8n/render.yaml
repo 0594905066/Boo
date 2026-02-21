@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: n8n
+    env: docker
+    dockerfilePath: Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: N8N_HOST
+        value: ${RENDER_EXTERNAL_HOSTNAME}
+      - key: N8N_PORT
+        value: 80
+      - key: WEBHOOK_URL
+        value: https://${RENDER_EXTERNAL_HOSTNAME}/
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        fromService: ai-agent-db
+        property: host
+      - key: DB_POSTGRESDB_PORT
+        fromService: ai-agent-db
+        property: port
+      - key: DB_POSTGRESDB_DATABASE
+        fromService: ai-agent-db
+        property: database
+      - key: DB_POSTGRESDB_USER
+        fromService: ai-agent-db
+        property: user
+      - key: DB_POSTGRESDB_PASSWORD
+        fromService: ai-agent-db
+        property: password
+      - key: N8N_BASIC_AUTH_USER
+        value: admin
+      - key: N8N_BASIC_AUTH_PASSWORD
+        generateValue: true
+      - key: GENERIC_TIMEZONE
+        value: Asia/Riyadh # Or your preferred timezone

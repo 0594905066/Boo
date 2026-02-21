@@ -1,0 +1,24 @@
+services:
+  # Backend Service
+  - type: web
+    name: ai-agent-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/agent/status
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: ai-agent-db
+        property: connectionString
+      - key: PORT
+        value: 10000 # Render uses dynamic ports, but we can set a default
+
+  # Database Service
+  - type: pserv
+    name: ai-agent-db
+    plan: free # Use free tier for testing
+    databaseName: ai_agent_db
+    user: ai_agent
+    ipAllowList: [] # Allow all IPs for testing. Restrict in production!
+    # Initial SQL to run on first deploy (optional)
+    # initdb: /path/to/init-db.sql # This would be if init-db.sql was in the root of the backend service, which it isn't currently.
