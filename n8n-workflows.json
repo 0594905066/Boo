@@ -1,0 +1,244 @@
+{
+  "workflows": [
+    {
+      "id": "workflow_1",
+      "name": "جمع البيانات من GitHub",
+      "description": "جمع أمثلة الكود من GitHub لتعليم الوكيل البرمجة",
+      "triggers": ["schedule", "manual"],
+      "schedule": "0 0 * * *",
+      "nodes": [
+        {
+          "id": "trigger",
+          "type": "schedule",
+          "config": {
+            "interval": "daily"
+          }
+        },
+        {
+          "id": "github_search",
+          "type": "http",
+          "config": {
+            "method": "GET",
+            "url": "https://api.github.com/search/repositories",
+            "params": {
+              "q": "language:javascript stars:>100",
+              "sort": "stars",
+              "order": "desc",
+              "per_page": 10
+            }
+          }
+        },
+        {
+          "id": "process_data",
+          "type": "function",
+          "config": {
+            "code": "return items.map(item => ({ name: item.name, url: item.html_url, language: item.language }))"
+          }
+        },
+        {
+          "id": "save_to_backend",
+          "type": "http",
+          "config": {
+            "method": "POST",
+            "url": "http://localhost:3000/api/agent/knowledge",
+            "body": {
+              "category": "programming",
+              "content": "{{ $json }}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "workflow_2",
+      "name": "جمع موارد التصميم",
+      "description": "جمع أمثلة تصميم من Dribbble و Behance",
+      "triggers": ["schedule", "manual"],
+      "schedule": "0 6 * * *",
+      "nodes": [
+        {
+          "id": "trigger",
+          "type": "schedule",
+          "config": {
+            "interval": "daily",
+            "time": "06:00"
+          }
+        },
+        {
+          "id": "fetch_dribbble",
+          "type": "http",
+          "config": {
+            "method": "GET",
+            "url": "https://api.dribbble.com/v2/shots",
+            "headers": {
+              "Authorization": "Bearer YOUR_DRIBBBLE_TOKEN"
+            }
+          }
+        },
+        {
+          "id": "extract_design_info",
+          "type": "function",
+          "config": {
+            "code": "return items.map(item => ({ title: item.title, description: item.description, images: item.images }))"
+          }
+        },
+        {
+          "id": "save_designs",
+          "type": "http",
+          "config": {
+            "method": "POST",
+            "url": "http://localhost:3000/api/agent/knowledge",
+            "body": {
+              "category": "design",
+              "content": "{{ $json }}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "workflow_3",
+      "name": "تحديث معرفة الأتمتة",
+      "description": "جمع أمثلة سير العمل والأتمتة من المصادر المفتوحة",
+      "triggers": ["schedule", "manual"],
+      "schedule": "0 12 * * *",
+      "nodes": [
+        {
+          "id": "trigger",
+          "type": "schedule",
+          "config": {
+            "interval": "daily",
+            "time": "12:00"
+          }
+        },
+        {
+          "id": "fetch_zapier_templates",
+          "type": "http",
+          "config": {
+            "method": "GET",
+            "url": "https://zapier.com/api/v1/templates"
+          }
+        },
+        {
+          "id": "process_automation_data",
+          "type": "function",
+          "config": {
+            "code": "return items.map(item => ({ name: item.name, description: item.description, apps: item.apps }))"
+          }
+        },
+        {
+          "id": "save_automation_knowledge",
+          "type": "http",
+          "config": {
+            "method": "POST",
+            "url": "http://localhost:3000/api/agent/knowledge",
+            "body": {
+              "category": "automation",
+              "content": "{{ $json }}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "workflow_4",
+      "name": "مراقبة المهام وتحديثها",
+      "description": "التحقق من حالة المهام وتحديثها تلقائياً",
+      "triggers": ["schedule"],
+      "schedule": "*/5 * * * *",
+      "nodes": [
+        {
+          "id": "trigger",
+          "type": "schedule",
+          "config": {
+            "interval": "5 minutes"
+          }
+        },
+        {
+          "id": "fetch_tasks",
+          "type": "http",
+          "config": {
+            "method": "GET",
+            "url": "http://localhost:3000/api/agent/tasks"
+          }
+        },
+        {
+          "id": "check_task_status",
+          "type": "function",
+          "config": {
+            "code": "return items.filter(task => task.status === 'pending')"
+          }
+        },
+        {
+          "id": "update_task_status",
+          "type": "http",
+          "config": {
+            "method": "PUT",
+            "url": "http://localhost:3000/api/agent/tasks/{{ $json.id }}",
+            "body": {
+              "status": "in_progress"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "workflow_5",
+      "name": "إرسال تقارير التقدم",
+      "description": "إرسال تقارير يومية عن تقدم الوكيل",
+      "triggers": ["schedule"],
+      "schedule": "0 18 * * *",
+      "nodes": [
+        {
+          "id": "trigger",
+          "type": "schedule",
+          "config": {
+            "interval": "daily",
+            "time": "18:00"
+          }
+        },
+        {
+          "id": "fetch_agent_status",
+          "type": "http",
+          "config": {
+            "method": "GET",
+            "url": "http://localhost:3000/api/agent/status"
+          }
+        },
+        {
+          "id": "fetch_knowledge_stats",
+          "type": "http",
+          "config": {
+            "method": "GET",
+            "url": "http://localhost:3000/api/agent/knowledge"
+          }
+        },
+        {
+          "id": "generate_report",
+          "type": "function",
+          "config": {
+            "code": "return { report: 'Daily Agent Progress Report', status: arguments[0], knowledge: arguments[1], timestamp: new Date() }"
+          }
+        },
+        {
+          "id": "send_email",
+          "type": "email",
+          "config": {
+            "to": "admin@example.com",
+            "subject": "تقرير تقدم الوكيل اليومي",
+            "body": "{{ $json.report }}"
+          }
+        }
+      ]
+    }
+  ],
+  "configuration": {
+    "n8n_url": "http://localhost:5678",
+    "api_key": "YOUR_N8N_API_KEY",
+    "webhook_url": "http://localhost:5678/webhook/ai-agent",
+    "retry_policy": {
+      "max_retries": 3,
+      "retry_delay": 5000
+    }
+  }
+}
